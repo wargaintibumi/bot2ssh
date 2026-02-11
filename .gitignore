@@ -1,0 +1,20 @@
+# Logs
+*.log
+/tmp/
+nohup.out
+
+# Environment files
+.env
+
+# Ngrok files
+ngrok
+
+# Screen output
+screen_output.txt
+screen_check.txt
+screen_latest.txt
+
+# Temporary files
+*.tmp
+*.swp
+*~
