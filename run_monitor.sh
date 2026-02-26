@@ -53,7 +53,7 @@ start_ngrok() {
     local attempt=1
     local URL=""
     while [ $attempt -le 5 ] && [ -z "$URL" ]; do
-        URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"tcp://[^"]*' | cut -d'"' -f4)
+        URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"[^"]*' | head -1 | cut -d'"' -f4)
         if [ -z "$URL" ]; then
             sleep 2
             attempt=$((attempt + 1))
@@ -61,13 +61,16 @@ start_ngrok() {
     done
 
     if [ -n "$URL" ]; then
-        HOST=$(echo "$URL" | sed 's/tcp:\/\///' | cut -d':' -f1)
-        PORT=$(echo "$URL" | sed 's/tcp:\/\///' | cut -d':' -f2)
-
         echo "[$(date '+%H:%M:%S')] ✓ Ngrok URL: $URL"
-        echo "[$(date '+%H:%M:%S')] ✓ Host: $HOST Port: $PORT"
 
-        MSG="<b>🚀 Ngrok SSH Tunnel Active</b>%0A%0A<b>URL:</b> <code>${URL}</code>%0A<b>Host:</b> <code>${HOST}</code>%0A<b>Port:</b> <code>${PORT}</code>%0A%0A<b>SSH:</b> <code>ssh -p ${PORT} ${SSH_USER}@${HOST}</code>%0A%0A<b>Time:</b> $(date '+%Y-%m-%d %H:%M:%S')"
+        if [ "$NGROK_PROTOCOL" = "tcp" ]; then
+            HOST=$(echo "$URL" | sed 's/tcp:\/\///' | cut -d':' -f1)
+            PORT=$(echo "$URL" | sed 's/tcp:\/\///' | cut -d':' -f2)
+            echo "[$(date '+%H:%M:%S')] ✓ Host: $HOST Port: $PORT"
+            MSG="<b>🚀 Ngrok SSH Tunnel Active</b>%0A%0A<b>URL:</b> <code>${URL}</code>%0A<b>Host:</b> <code>${HOST}</code>%0A<b>Port:</b> <code>${PORT}</code>%0A%0A<b>SSH:</b> <code>ssh -p ${PORT} ${SSH_USER}@${HOST}</code>%0A%0A<b>Time:</b> $(date '+%Y-%m-%d %H:%M:%S')"
+        else
+            MSG="<b>🚀 Ngrok Web Tunnel Active</b>%0A%0A<b>URL:</b> <code>${URL}</code>%0A<b>Local port:</b> <code>${NGROK_PORT}</code>%0A%0A<b>Time:</b> $(date '+%Y-%m-%d %H:%M:%S')"
+        fi
 
         send_telegram "$MSG"
         echo "[$(date '+%H:%M:%S')] ✓ Telegram sent"
