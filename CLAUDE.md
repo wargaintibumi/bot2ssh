@@ -1,14 +1,14 @@
-# Ngrok SSH Monitor with Telegram Notifications
+# Ngrok Monitor with Telegram Notifications
 
 ## Project Overview
 
-This project provides an automated monitoring system for ngrok SSH tunnels with Telegram notifications. When ngrok starts, restarts, or fails, you'll receive instant notifications with connection details.
+This project provides an automated monitoring system for ngrok tunnels with Telegram notifications. It supports both **TCP** (SSH) and **HTTP** (web app) tunnels. When ngrok starts, restarts, or fails, you'll receive instant notifications with connection details.
 
 ## Features
 
 - 🔄 **Auto-restart**: Automatically restarts ngrok when it terminates
-- 📱 **Telegram notifications**: Sends SSH connection details via Telegram bot
-- 🔐 **SSH tunnel monitoring**: Monitors TCP tunnel on port 22
+- 📱 **Telegram notifications**: Sends connection details via Telegram bot
+- 🌐 **TCP & HTTP support**: Monitor SSH tunnels (TCP) or web app tunnels (HTTP)
 - ⚡ **Automatic URL extraction**: Gets ngrok URL from API automatically
 - 🎨 **Colored terminal output**: Easy-to-read status messages
 - ✅ **Reliable**: Runs in screen session for persistence
@@ -38,38 +38,46 @@ screen -r ngrok  # then press Ctrl+C
 
 ## Configuration
 
+All settings are stored in `.env` (created by `./setup.sh`).
+
+### Protocol
+
+Set `NGROK_PROTOCOL` in `.env`:
+- `tcp` — SSH tunnel on port 22 (default)
+- `http` — Web app tunnel (e.g., port 80 or 8080)
+
 ### Telegram Bot Setup
 
-1. The bot token and chat ID are already configured in the scripts
-2. To change them, edit:
-   - `run_monitor.sh`
-   - `ngrok_monitor_final.sh`
-   - `test_telegram.sh`
+1. Run `./setup.sh` to configure interactively, or edit `.env` directly:
+   - `TELEGRAM_BOT_TOKEN` — from @BotFather
+   - `TELEGRAM_CHAT_ID` — your chat ID
 
 ### Ngrok Configuration
 
-- **Port**: 22 (SSH)
-- **Protocol**: TCP
+- **Port**: Configured in `.env` (`NGROK_PORT`, default 22 for TCP, 80 for HTTP)
+- **Protocol**: Configured in `.env` (`NGROK_PROTOCOL`)
 - **Auth token**: Configured in `~/.config/ngrok/ngrok.yml`
 
 ## Files
 
-- **run_monitor.sh** - Main monitoring script (recommended)
-- **test_telegram.sh** - Test Telegram notifications
-- **START_HERE.md** - Detailed user guide
-- **CLAUDE.md** - This file
-- **ngrok_monitor_final.sh** - Alternative monitor script
-- **ngrok-monitor.service** - Systemd service file (not recommended due to issues)
+- **run_monitor.sh** — Main monitoring script (recommended)
+- **setup.sh** — Interactive setup wizard
+- **uninstall.sh** — Remove crontab entry, kill processes, clean up
+- **test_telegram.sh** — Test Telegram notifications
+- **START_HERE.md** — Quick start guide
+- **CLAUDE.md** — This file
+- **ngrok_monitor_final.sh** — Alternative monitor script
+- **ngrok-monitor.service** — Systemd service file (not recommended)
 
 ## Architecture
 
 The monitor works by:
 
-1. Starting ngrok with TCP tunnel on port 22
-2. Querying ngrok's local API (http://localhost:4040/api/tunnels)
+1. Starting ngrok with the configured protocol and port (`tcp 22` or `http 80`)
+2. Querying ngrok's local API (`http://localhost:4040/api/tunnels`)
 3. Extracting the public URL
-4. Sending connection details via Telegram API
-5. Monitoring ngrok process every 10 seconds
+4. Sending connection details via Telegram API (SSH command for TCP, URL for HTTP)
+5. Monitoring the ngrok process every 10 seconds
 6. Auto-restarting and notifying on failures
 
 ## Troubleshooting
@@ -86,7 +94,7 @@ The monitor works by:
 - Verify bot token and chat ID are correct
 - Make sure you've sent at least one message to the bot first
 
-### SSH connection fails
+### SSH connection fails (TCP mode)
 
 - Verify SSH service is running: `sudo systemctl status ssh`
 - Check current ngrok URL: `curl -s http://localhost:4040/api/tunnels | grep public_url`
@@ -96,7 +104,7 @@ The monitor works by:
 ### Screen session died
 
 - Check screen output: `screen -S ngrok -X hardcopy /tmp/screen.txt && cat /tmp/screen.txt`
-- View logs: Check /tmp/ngrok_monitor.log if using v2 script
+- View logs: Check /tmp/ngrok.log for ngrok output
 
 ## Git Configuration
 
@@ -110,7 +118,7 @@ This repository is configured for:
 - bash
 - curl
 - screen (optional but recommended)
-- SSH server running on port 22
+- SSH server running on port 22 (TCP mode only)
 - Telegram bot token and chat ID
 
 ## License

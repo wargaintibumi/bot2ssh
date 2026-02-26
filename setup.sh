@@ -16,8 +16,26 @@ NC='\033[0m'
 
 echo ""
 echo "========================================"
-echo "  bot2ssh - Ngrok SSH Monitor Setup"
+echo "  bot2ssh - Ngrok Monitor Setup"
 echo "========================================"
+echo ""
+
+# ---- Step 0: Choose protocol ----
+echo -e "${YELLOW}Choose tunnel protocol:${NC}"
+echo "  1) tcp  - SSH tunnel (forward port 22)"
+echo "  2) http - Web app tunnel (forward a local web server)"
+echo ""
+read -p "  Protocol [1]: " PROTO_CHOICE
+case "$PROTO_CHOICE" in
+    2|http)
+        NGROK_PROTOCOL="http"
+        echo -e "${GREEN}  ✓ Protocol: http${NC}"
+        ;;
+    *)
+        NGROK_PROTOCOL="tcp"
+        echo -e "${GREEN}  ✓ Protocol: tcp${NC}"
+        ;;
+esac
 echo ""
 
 # ---- Step 1: Check dependencies ----
@@ -52,11 +70,13 @@ else
     echo -e "${GREEN}  ✓ screen installed${NC}"
 fi
 
-if ! systemctl is-active ssh &> /dev/null; then
-    echo -e "${YELLOW}  ⚠ SSH service not running${NC}"
-    echo "    Start it: sudo systemctl enable ssh && sudo systemctl start ssh"
-else
-    echo -e "${GREEN}  ✓ SSH service running${NC}"
+if [ "$NGROK_PROTOCOL" = "tcp" ]; then
+    if ! systemctl is-active ssh &> /dev/null; then
+        echo -e "${YELLOW}  ⚠ SSH service not running${NC}"
+        echo "    Start it: sudo systemctl enable ssh && sudo systemctl start ssh"
+    else
+        echo -e "${GREEN}  ✓ SSH service running${NC}"
+    fi
 fi
 
 if [ $MISSING -eq 1 ]; then
@@ -142,13 +162,20 @@ if [ -z "$TELEGRAM_CHAT_ID" ] || [ "$TELEGRAM_CHAT_ID" == "your_chat_id_here" ];
 fi
 
 # Optional settings
-SSH_USER="${SSH_USER:-$(whoami)}"
-read -p "  SSH username [$SSH_USER]: " INPUT_USER
-SSH_USER="${INPUT_USER:-$SSH_USER}"
+if [ "$NGROK_PROTOCOL" = "tcp" ]; then
+    SSH_USER="${SSH_USER:-$(whoami)}"
+    read -p "  SSH username [$SSH_USER]: " INPUT_USER
+    SSH_USER="${INPUT_USER:-$SSH_USER}"
 
-NGROK_PORT="${NGROK_PORT:-22}"
-read -p "  SSH port [$NGROK_PORT]: " INPUT_PORT
-NGROK_PORT="${INPUT_PORT:-$NGROK_PORT}"
+    NGROK_PORT="${NGROK_PORT:-22}"
+    read -p "  SSH port [$NGROK_PORT]: " INPUT_PORT
+    NGROK_PORT="${INPUT_PORT:-$NGROK_PORT}"
+else
+    NGROK_PORT="${NGROK_PORT:-80}"
+    read -p "  Local web server port [$NGROK_PORT]: " INPUT_PORT
+    NGROK_PORT="${INPUT_PORT:-$NGROK_PORT}"
+    SSH_USER=""
+fi
 
 # Write .env
 cat > "$ENV_FILE" << EOF
@@ -158,7 +185,7 @@ TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
 
 # Ngrok Configuration
 NGROK_PORT=$NGROK_PORT
-NGROK_PROTOCOL=tcp
+NGROK_PROTOCOL=$NGROK_PROTOCOL
 SSH_USER=$SSH_USER
 EOF
 

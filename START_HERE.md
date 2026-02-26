@@ -2,6 +2,15 @@
 
 ## ✅ Your script is ready! Here's how to use it:
 
+### First-Time Setup
+
+```bash
+cd /home/kali/bot2ssh
+./setup.sh
+```
+
+This will configure your Telegram bot, choose protocol (TCP or HTTP), and optionally enable auto-start on boot.
+
 ### Option 1: Run in Screen (Recommended)
 
 ```bash
@@ -26,9 +35,16 @@ Press `Ctrl+C` to stop.
 ## 📱 What You'll Get
 
 Every time ngrok starts or restarts, you'll receive a Telegram message with:
+
+**TCP mode (SSH tunnel):**
 - ✅ Ngrok URL (e.g., `tcp://0.tcp.ap.ngrok.io:12345`)
 - ✅ Host and Port
 - ✅ Ready-to-use SSH command: `ssh -p PORT kali@HOST`
+- ✅ Timestamp
+
+**HTTP mode (web app tunnel):**
+- ✅ Public URL (e.g., `https://abcd1234.ngrok-free.app`)
+- ✅ Local port being forwarded
 - ✅ Timestamp
 
 ## 🔄 Auto-Restart Feature
@@ -38,12 +54,13 @@ The script monitors ngrok every 10 seconds. If it crashes or gets terminated:
 2. 🔄 Script automatically restarts ngrok
 3. 📱 You'll get a new message with the new connection details
 
-## 📝 Files Created
+## 📝 Files
 
-- `run_monitor.sh` - Main script (simple and reliable)
+- `setup.sh` - Interactive setup wizard
+- `run_monitor.sh` - Main monitoring script
+- `uninstall.sh` - Remove crontab, kill processes, clean up
 - `test_telegram.sh` - Test Telegram notifications
 - `START_HERE.md` - This guide
-- Other scripts (backups/alternatives)
 
 ## 🛠️ Troubleshooting
 
@@ -80,4 +97,4 @@ Then press `Ctrl+A` then `D` to detach and let it run!
 
 ---
 
-**That's it! Your SSH tunnel will auto-restart and you'll always get notified!** 🎉
+**That's it! Your tunnel will auto-restart and you'll always get notified!** 🎉
