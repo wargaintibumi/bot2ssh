@@ -20,10 +20,17 @@ NGROK_PROTOCOL="${NGROK_PROTOCOL:-tcp}"
 SSH_USER="${SSH_USER:-kali}"
 
 send_telegram() {
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+    local RESPONSE
+    RESPONSE=$(curl -s --max-time 10 -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
         -d chat_id="${TELEGRAM_CHAT_ID}" \
         -d text="$1" \
-        -d parse_mode="HTML" > /dev/null
+        -d parse_mode="HTML")
+    if echo "$RESPONSE" | grep -q '"ok":true'; then
+        return 0
+    else
+        echo "[$(date '+%H:%M:%S')] ✗ Telegram failed: $RESPONSE"
+        return 1
+    fi
 }
 
 # Wait for internet connectivity before doing anything
@@ -72,8 +79,17 @@ start_ngrok() {
             MSG="<b>🚀 Ngrok Web Tunnel Active</b>%0A%0A<b>URL:</b> <code>${URL}</code>%0A<b>Local port:</b> <code>${NGROK_PORT}</code>%0A%0A<b>Time:</b> $(date '+%Y-%m-%d %H:%M:%S')"
         fi
 
-        send_telegram "$MSG"
-        echo "[$(date '+%H:%M:%S')] ✓ Telegram sent"
+        if send_telegram "$MSG"; then
+            echo "[$(date '+%H:%M:%S')] ✓ Telegram sent"
+        else
+            echo "[$(date '+%H:%M:%S')] Retrying Telegram in 5s..."
+            sleep 5
+            if send_telegram "$MSG"; then
+                echo "[$(date '+%H:%M:%S')] ✓ Telegram sent (retry)"
+            else
+                echo "[$(date '+%H:%M:%S')] ✗ Telegram notification failed"
+            fi
+        fi
     else
         echo "[$(date '+%H:%M:%S')] ✗ Failed to get URL"
         echo "[$(date '+%H:%M:%S')] Check /tmp/ngrok.log for details"
