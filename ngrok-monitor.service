@@ -1,14 +1,16 @@
 [Unit]
-Description=Ngrok SSH Monitor with Telegram Notifications
-After=network.target
+Description=Ngrok Monitor + Telegram WiFi Bot
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=kali
 WorkingDirectory=/home/kali/bot2ssh
-ExecStart=/home/kali/bot2ssh/ngrok_monitor_v2.sh
-Restart=always
+ExecStart=/home/kali/bot2ssh/run_monitor.sh
+Restart=on-failure
 RestartSec=10
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 [Install]
 WantedBy=multi-user.target
